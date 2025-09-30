@@ -1,1 +1,74 @@
- 
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>업비트 KRW 가이드앱 v5.5</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body { background:#0d1117; color:#eee; font-family:Arial, sans-serif; padding:20px; }
+    h1 { color:#00d084; }
+    select, button, input { margin:5px; padding:5px; }
+    .box { background:#161b22; padding:15px; margin:10px 0; border-radius:8px; }
+  </style>
+</head>
+<body>
+  <h1>업비트 KRW 가이드앱 v5.5</h1>
+  <div>
+    <label>코인 선택:</label>
+    <select id="coin">
+      <option value="KRW-BTC">비트코인 (BTC)</option>
+      <option value="KRW-ETH">이더리움 (ETH)</option>
+      <option value="KRW-XRP">리플 (XRP)</option>
+    </select>
+    <label>캔들:</label>
+    <select id="interval">
+      <option value="minutes/5">5분봉</option>
+      <option value="minutes/60">1시간봉</option>
+      <option value="days">일봉</option>
+      <option value="weeks">주봉</option>
+    </select>
+    <button onclick="loadData()">분석 실행</button>
+  </div>
+
+  <div class="box">
+    <h2>분석 결과</h2>
+    <div id="output">코인과 차트를 선택하고 실행하세요.</div>
+  </div>
+
+  <script>
+    async function loadData() {
+      const coin = document.getElementById("coin").value;
+      const interval = document.getElementById("interval").value;
+      const url = `https://api.upbit.com/v1/candles/${interval}?market=${coin}&count=30`;
+
+      document.getElementById("output").innerHTML = "데이터 불러오는 중...";
+
+      try {
+        const res = await fetch(url);
+        if (!res.ok) throw new Error("API 호출 실패");
+        const data = await res.json();
+
+        // 최신 데이터
+        const latest = data[0];
+        const price = latest.trade_price;
+        const change = latest.change_price;
+
+        // 간단 분석
+        const avg = data.reduce((a,b)=>a+b.trade_price,0)/data.length;
+        let signal = price > avg ? "상승 우세 📈 (투자 긍정)" : "하락 압력 📉 (투자 주의)";
+
+        document.getElementById("output").innerHTML = `
+          <b>${coin}</b><br>
+          현재가: ${price.toLocaleString()} 원<br>
+          변동: ${change.toLocaleString()} 원<br>
+          최근 30개 평균가: ${avg.toLocaleString()} 원<br>
+          <hr>
+          <b>분석 의견:</b> ${signal}
+        `;
+      } catch (e) {
+        document.getElementById("output").innerHTML = "❌ 오류: " + e.message;
+      }
+    }
+  </script>
+</body>
+</html> 
